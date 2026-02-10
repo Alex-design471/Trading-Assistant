@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: rgba(15, 52, 96, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid #0f3460;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #00d4ff;
+            text-align: center;
+        }
+
+        .desktop-tabs {
+            display: none;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(15, 52, 96, 0.5);
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .desktop-tabs button {
+            padding: 0.75rem 1.5rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            color: #eee;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .desktop-tabs button.active {
+            background: #0f3460;
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+
+        .desktop-tabs button:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .event-card {
+            background: rgba(15, 52, 96, 0.4);
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .event-card:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .event-card.priority-high {
+            border-left: 4px solid #ff4444;
+        }
+
+        .event-card.priority-medium {
+            border-left: 4px solid #ff9800;
+        }
+
+        .event-card.priority-low {
+            border-left: 4px solid #4caf50;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .event-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-datetime {
+            font-size: 0.9rem;
+            color: #aaa;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .event-detail-item {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .add-button {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #00d4ff, #0f3460);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+            transition: all 0.3s;
+            z-index: 99;
+        }
+
+        .add-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(0, 212, 255, 0.6);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 52, 96, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            border-top: 2px solid #0f3460;
+            z-index: 100;
+        }
+
+        .bottom-nav button {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+
+        .bottom-nav button.active {
+            color: #00d4ff;
+        }
+
+        .bottom-nav button .icon {
+            font-size: 1.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #aaa;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-tabs {
+                display: flex;
+            }
+            .bottom-nav {
+                display: none;
+            }
+            .add-button {
+                bottom: 20px;
+            }
+            body {
+                padding-bottom: 0;
+            }
+        }
+
+        .settings-section {
+            background: rgba(15, 52, 96, 0.4);
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .settings-section h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: #555;
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: #4caf50;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+        }
+
+        .toggle.active::after {
+            left: 27px;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #00d4ff, #0f3460);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .action-button.secondary {
+            background: rgba(0, 212, 255, 0.2);
+            border: 2px solid #00d4ff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 68, 68, 0.2);
+            border: 2px solid #ff4444;
+            color: #ff4444;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #ff4444;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: #00d4ff;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            color: #eee;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Trading Assistant</h1>
+    </div>
+
+    <div class="desktop-tabs">
+        <button class="tab-btn active" data-tab="active">📅 Aktív Események</button>
+        <button class="tab-btn" data-tab="completed">✅ Elvégzett</button>
+        <button class="tab-btn" data-tab="scheduled">🔔 Összes Ütemezett</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Beállítások</button>
+    </div>
+
+    <div class="container">
+        <!-- Active Events Section -->
+        <div id="active" class="section active">
+            <div class="countdown" id="countdown">00:00:00</div>
+            <div id="activeEventsList"></div>
+        </div>
+
+        <!-- Completed Events Section -->
+        <div id="completed" class="section">
+            <div id="completedEventsList">
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <h3>Nincs elvégzett esemény</h3>
+                    <p>A befejezett események itt jelennek meg</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scheduled Events Section -->
+        <div id="scheduled" class="section">
+            <div id="scheduledEventsList"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <div class="settings-section">
+                <h3>📊 Adat Kezelés</h3>
+                <button class="action-button" onclick="exportData()">📥 Adatok Exportálása (JSON)</button>
+                <button class="action-button secondary" onclick="document.getElementById('importFile').click()">📤 Adatok Importálása</button>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+                <button class="action-button secondary" style="background: rgba(255, 68, 68, 0.2); border-color: #ff4444; color: #ff4444;" onclick="clearAllData()">🗑️ Összes Adat Törlése</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>🔔 Értesítések</h3>
+                <div class="setting-item">
+                    <span>Push értesítések</span>
+                    <div class="toggle" id="pushToggle" onclick="toggleSetting('push')"></div>
+                </div>
+                <div class="setting-item">
+                    <span>Hangjelzés</span>
+                    <div class="toggle active" id="soundToggle" onclick="toggleSetting('sound')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>⏰ Időzítő</h3>
+                <div class="setting-item">
+                    <span>Automatikus újraindítás</span>
+                    <div class="toggle active" id="autoResetToggle" onclick="toggleSetting('autoReset')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>🎨 Megjelenés</h3>
+                <div class="setting-item">
+                    <span>Sötét téma</span>
+                    <div class="toggle active" id="darkModeToggle" onclick="toggleSetting('darkMode')"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-button" id="addEventBtn" onclick="openAddModal()">+</button>
+
+    <div class="bottom-nav">
+        <button class="nav-btn active" data-tab="active">
+            <span class="icon">📅</span>
+            <span>Aktív</span>
+        </button>
+        <button class="nav-btn" data-tab="completed">
+            <span class="icon">✅</span>
+            <span>Elvégzett</span>
+        </button>
+        <button class="nav-btn" data-tab="scheduled">
+            <span class="icon">🔔</span>
+            <span>Ütemezett</span>
+        </button>
+        <button class="nav-btn" data-tab="settings">
+            <span class="icon">⚙️</span>
+            <span>Beállítások</span>
+        </button>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">📝 Új Esemény</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Cím</label>
+                <input type="text" id="eventTitle" placeholder="pl. XTL Eladás">
+            </div>
+            <div class="form-group">
+                <label>Dátum</label>
+                <input type="date" id="eventDate">
+            </div>
+            <div class="form-group">
+                <label>Idő</label>
+                <input type="time" id="eventTime">
+            </div>
+            <div class="form-group">
+                <label>Prioritás</label>
+                <select id="eventPriority">
+                    <option value="high">🔥🔥🔥 Magas</option>
+                    <option value="medium">📊 Közepes</option>
+                    <option value="low">ℹ️ Alacsony</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Részletek (soronként)</label>
+                <textarea id="eventDetails" placeholder="✅ Első teendő&#10;💰 Második teendő&#10;📊 Harmadik teendő"></textarea>
+            </div>
+            <button class="action-button" onclick="saveEvent()">💾 Mentés</button>
+        </div>
+    </div>
+
+    <script>
+        // Initial data - XTL, NFLX, NVDA, MSTR events
+        let events = [
+            {
+                id: 1,
+                title: "XTL Eladás Előkészítés🔥🔥🔥",
+                date: "2026-02-10",
+                time: "14:00",
+                priority: "high",
+                details: ["✅ XTL ár Lightyear", "👀 Volume < 10k", "🔔 Alert $1.10/$0.90"],
+                completed: false
+            },
+            {
+                id: 2,
+                title: "XTL TELJES ELADÁS🔥🔥🔥",
+                date: "2026-02-10",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 20 shares SELL MAX", "📊 Limit $1.00-1.10"],
+                completed: false
+            },
+            {
+                id: 3,
+                title: "NFLX Warner Bros🔥🔥",
+                date: "2026-02-12",
+                time: "14:00",
+                priority: "high",
+                details: ["📰 Merger hírek", "🔴 FTC döntés"],
+                completed: false
+            },
+            {
+                id: 4,
+                title: "NFLX 50% Eladás🔥🔥",
+                date: "2026-02-12",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 ~22,364 Ft", "⚠️ Csak 50%!"],
+                completed: false
+            },
+            {
+                id: 5,
+                title: "NVDA Earnings Prep📊",
+                date: "2026-02-26",
+                time: "21:30",
+                priority: "medium",
+                details: ["📊 Analyst expectations", "🚫 NE VÁSÁROLJ MÉG"],
+                completed: false
+            },
+            {
+                id: 6,
+                title: "NVDA Earnings LIVE📊",
+                date: "2026-02-26",
+                time: "22:00",
+                priority: "medium",
+                details: ["📊 investor.nvidia.com", "⏰ Várj péntekig"],
+                completed: false
+            },
+            {
+                id: 7,
+                title: "MSTR Bitcoin Check🔥🔥",
+                date: "2026-03-03",
+                time: "13:00",
+                priority: "high",
+                details: ["🪙 BTC ár check", "⚠️ Ha +20% NE ADJ EL"],
+                completed: false
+            },
+            {
+                id: 8,
+                title: "MSTR 50% Eladás🔥🔥",
+                date: "2026-03-03",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 ~36,553 Ft", "🪙 BTC trend előbb"],
+                completed: false
+            },
+            {
+                id: 9,
+                title: "NVDA Első Vásárlás🔥🔥",
+                date: "2026-03-06",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 ~15,000 Ft", "⚠️ Első 30%"],
+                completed: false
+            },
+            {
+                id: 10,
+                title: "Portfolio Review🔥🔥",
+                date: "2026-04-07",
+                time: "10:00",
+                priority: "high",
+                details: ["📋 Teljes review", "📰 NFLX WB döntés"],
+                completed: false
+            }
+        ];
+
+        let countdown = 3600; // 1 hour
+        let currentEditId = null;
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('tradingEvents');
+            if (saved) {
+                events = JSON.parse(saved);
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('tradingEvents', JSON.stringify(events));
+        }
+
+        // Initialize
+        loadData();
+
+        // Countdown timer
+        function updateCountdown() {
+            const hours = Math.floor(countdown / 3600);
+            const minutes = Math.floor((countdown % 3600) / 60);
+            const seconds = countdown % 60;
+
+            document.getElementById('countdown').textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (countdown > 0) {
+                countdown--;
+            } else {
+                countdown = 3600;
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn, .nav-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(b => b.classList.add('active'));
+        }
+
+        document.querySelectorAll('.tab-btn, .nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // Render events
+        function renderEvents() {
+            const now = new Date();
+            const activeEvents = events.filter(e => !e.completed && new Date(e.date + 'T' + e.time) <= now);
+            const scheduledEvents = events.filter(e => !e.completed && new Date(e.date + 'T' + e.time) > now);
+            const completedEvents = events.filter(e => e.completed);
+
+            // Active events
+            const activeList = document.getElementById('activeEventsList');
+            if (activeEvents.length === 0) {
+                activeList.innerHTML = '<div class="empty-state"><div class="icon">📅</div><h3>Nincs aktív esemény</h3></div>';
+            } else {
+                activeList.innerHTML = activeEvents.map(renderEvent).join('');
+            }
+
+            // Scheduled events
+            const scheduledList = document.getElementById('scheduledEventsList');
+            if (scheduledEvents.length === 0) {
+                scheduledList.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><h3>Nincs ütemezett esemény</h3></div>';
+            } else {
+                scheduledList.innerHTML = scheduledEvents.map(renderEvent).join('');
+            }
+
+            // Completed events
+            const completedList = document.getElementById('completedEventsList');
+            if (completedEvents.length === 0) {
+                completedList.innerHTML = '<div class="empty-state"><div class="icon">✅</div><h3>Nincs elvégzett esemény</h3></div>';
+            } else {
+                completedList.innerHTML = completedEvents.map(renderEvent).join('');
+            }
+        }
+
+        function renderEvent(event) {
+            return `
+                <div class="event-card priority-${event.priority}">
+                    <button class="delete-btn" onclick="deleteEvent(${event.id})">🗑️</button>
+                    <div class="event-header">
+                        <div>
+                            <div class="event-title">${event.title}</div>
+                            <div class="event-datetime">
+                                <span>📅 ${event.date}</span>
+                                <span>🕐 ${event.time}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="event-details">
+                        ${event.details.map(d => `<div class="event-detail-item">${d}</div>`).join('')}
+                    </div>
+                    ${!event.completed ? `<button class="action-button" style="margin-top: 1rem;" onclick="markComplete(${event.id})">✅ Elvégezve</button>` : ''}
+                </div>
+            `;
+        }
+
+        // Mark event as complete
+        function markComplete(id) {
+            const event = events.find(e => e.id === id);
+            if (event) {
+                event.completed = true;
+                saveData();
+                renderEvents();
+            }
+        }
+
+        // Delete event
+        function deleteEvent(id) {
+            if (confirm('Biztosan törölni szeretnéd ezt az eseményt?')) {
+                events = events.filter(e => e.id !== id);
+                saveData();
+                renderEvents();
+            }
+        }
+
+        // Modal functions
+        function openAddModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = '📝 Új Esemény';
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventDate').value = '';
+            document.getElementById('eventTime').value = '';
+            document.getElementById('eventPriority').value = 'high';
+            document.getElementById('eventDetails').value = '';
+            document.getElementById('eventModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
+        function saveEvent() {
+            const title = document.getElementById('eventTitle').value;
+            const date = document.getElementById('eventDate').value;
+            const time = document.getElementById('eventTime').value;
+            const priority = document.getElementById('eventPriority').value;
+            const details = document.getElementById('eventDetails').value.split('\n').filter(d => d.trim());
+
+            if (!title || !date || !time) {
+                alert('Kérlek töltsd ki a kötelező mezőket!');
+                return;
+            }
+
+            if (currentEditId) {
+                const event = events.find(e => e.id === currentEditId);
+                Object.assign(event, { title, date, time, priority, details });
+            } else {
+                const newEvent = {
+                    id: Date.now(),
+                    title,
+                    date,
+                    time,
+                    priority,
+                    details,
+                    completed: false
+                };
+                events.push(newEvent);
+            }
+
+            saveData();
+            renderEvents();
+            closeModal();
+        }
+
+        // Settings toggle
+        function toggleSetting(setting) {
+            document.getElementById(setting + 'Toggle').classList.toggle('active');
+        }
+
+        // Export data
+        function exportData() {
+            const dataStr = JSON.stringify(events, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `trading-assistant-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            alert('✅ Adatok exportálva!');
+        }
+
+        // Import data
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        if (confirm(`Importálni szeretnél ${imported.length} eseményt? Ez hozzáadja őket a meglévő adatokhoz.`)) {
+                            events = [...events, ...imported];
+                            saveData();
+                            renderEvents();
+                            alert('✅ Adatok sikeresen importálva!');
+                        }
+                    } else {
+                        alert('❌ Hibás fájl formátum!');
+                    }
+                } catch (err) {
+                    alert('❌ Hiba az importálás során: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('⚠️ Biztosan törölni szeretnéd az ÖSSZES adatot? Ez nem vonható vissza!')) {
+                if (confirm('❗ Utolsó figyelmeztetés! Minden adat törlődik!')) {
+                    events = [];
+                    localStorage.clear();
+                    renderEvents();
+                    alert('✅ Minden adat törölve!');
+                }
+            }
+        }
+
+        // Initial render
+        renderEvents();
+    </script>
+</body>
+</html>
