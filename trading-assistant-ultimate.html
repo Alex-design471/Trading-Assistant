@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: rgba(15, 52, 96, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid #0f3460;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .app-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00d4ff, #0f3460);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #00d4ff;
+        }
+
+        .header p {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 0.25rem;
+        }
+
+        /* Next Event Banner */
+        .next-event-banner {
+            background: linear-gradient(135deg, #ff9800, #f44336);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .next-event-banner.hidden {
+            display: none;
+        }
+
+        .next-event-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .next-event-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .next-event-info p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .next-event-countdown {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        .notification-banner {
+            background: linear-gradient(135deg, #ff9800, #f44336);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .notification-banner.hidden {
+            display: none;
+        }
+
+        .enable-notif-btn {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            color: #ff9800;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .enable-notif-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .desktop-tabs {
+            display: none;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(15, 52, 96, 0.5);
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .desktop-tabs button {
+            padding: 0.75rem 1.5rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            color: #eee;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .desktop-tabs button.active {
+            background: #0f3460;
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+
+        .desktop-tabs button:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .event-card {
+            background: rgba(15, 52, 96, 0.4);
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .event-card:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .event-card.priority-high {
+            border-left: 4px solid #ff4444;
+        }
+
+        .event-card.priority-medium {
+            border-left: 4px solid #ff9800;
+        }
+
+        .event-card.priority-low {
+            border-left: 4px solid #4caf50;
+        }
+
+        .event-card.new {
+            border-color: #4caf50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .event-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-datetime {
+            font-size: 0.9rem;
+            color: #aaa;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .event-detail-item {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .countdown {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .add-button {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #00d4ff, #0f3460);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+            transition: all 0.3s;
+            z-index: 99;
+        }
+
+        .add-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(0, 212, 255, 0.6);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 52, 96, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            border-top: 2px solid #0f3460;
+            z-index: 100;
+        }
+
+        .bottom-nav button {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s;
+        }
+
+        .bottom-nav button.active {
+            color: #00d4ff;
+        }
+
+        .bottom-nav button .icon {
+            font-size: 1.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #aaa;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-tabs {
+                display: flex;
+            }
+            .bottom-nav {
+                display: none;
+            }
+            .add-button {
+                bottom: 20px;
+            }
+            body {
+                padding-bottom: 0;
+            }
+        }
+
+        /* Remaining styles same as before */
+        .settings-section {
+            background: rgba(15, 52, 96, 0.4);
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .settings-section h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: #555;
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: #4caf50;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+        }
+
+        .toggle.active::after {
+            left: 27px;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #00d4ff, #0f3460);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .action-button.secondary {
+            background: rgba(0, 212, 255, 0.2);
+            border: 2px solid #00d4ff;
+        }
+
+        .action-button.danger {
+            background: rgba(255, 68, 68, 0.2);
+            border: 2px solid #ff4444;
+            color: #ff4444;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 68, 68, 0.2);
+            border: 2px solid #ff4444;
+            color: #ff4444;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #ff4444;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: #00d4ff;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            color: #eee;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .notif-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .notif-status.granted {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            border: 1px solid #4caf50;
+        }
+
+        .notif-status.denied {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid #f44336;
+        }
+
+        .notif-status.default {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+            border: 1px solid #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="app-logo">📊</div>
+        <div class="header-content">
+            <h1>Trading Assistant</h1>
+            <p>Portfolio & Események</p>
+        </div>
+    </div>
+
+    <!-- Dynamic Next Event Banner -->
+    <div id="nextEventBanner" class="next-event-banner hidden">
+        <div class="next-event-content">
+            <div class="next-event-info">
+                <h3 id="nextEventTitle">Következő esemény</h3>
+                <p id="nextEventTime">Frissítés...</p>
+            </div>
+            <div class="next-event-countdown" id="nextEventCountdown">00:00:00</div>
+        </div>
+    </div>
+
+    <!-- Notification Permission Banner -->
+    <div id="notificationBanner" class="notification-banner">
+        <div class="notification-banner-content">
+            <h3>🔔 Értesítések Engedélyezése</h3>
+            <p>Kapj push értesítéseket a fontos eseményekről!</p>
+        </div>
+        <button class="enable-notif-btn" onclick="requestNotificationPermission()">Engedélyezés</button>
+    </div>
+
+    <div class="desktop-tabs">
+        <button class="tab-btn active" data-tab="active">📅 Aktív Események</button>
+        <button class="tab-btn" data-tab="completed">✅ Elvégzett</button>
+        <button class="tab-btn" data-tab="scheduled">🔔 Összes Ütemezett</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Beállítások</button>
+    </div>
+
+    <div class="container">
+        <!-- Active Events Section -->
+        <div id="active" class="section active">
+            <div class="countdown" id="countdown">00:00:00</div>
+            <div id="activeEventsList"></div>
+        </div>
+
+        <!-- Completed Events Section -->
+        <div id="completed" class="section">
+            <div id="completedEventsList">
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <h3>Nincs elvégzett esemény</h3>
+                    <p>A befejezett események itt jelennek meg</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scheduled Events Section -->
+        <div id="scheduled" class="section">
+            <div id="scheduledEventsList"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <div class="settings-section">
+                <h3>🔔 Értesítések</h3>
+                <div class="setting-item">
+                    <div>
+                        <div>Push értesítések</div>
+                        <div class="setting-description">Státusz: <span id="notifStatus" class="notif-status default">Nincs engedélyezve</span></div>
+                    </div>
+                </div>
+                <button class="action-button" onclick="requestNotificationPermission()">🔔 Értesítések Engedélyezése</button>
+                <button class="action-button secondary" onclick="testNotification()">🧪 Teszt Értesítés</button>
+                <div class="setting-item">
+                    <span>Hangjelzés</span>
+                    <div class="toggle active" id="soundToggle" onclick="toggleSetting('sound')"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>📊 Adat Kezelés</h3>
+                <button class="action-button" onclick="exportData()">📥 Adatok Exportálása (JSON)</button>
+                <button class="action-button secondary" onclick="document.getElementById('importFile').click()">📤 Adatok Importálása</button>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+                <button class="action-button danger" onclick="clearAllData()">🗑️ Összes Adat Törlése</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>⏰ Időzítő Beállítások</h3>
+                <div class="setting-item">
+                    <span>Automatikus újraindítás</span>
+                    <div class="toggle active" id="autoResetToggle" onclick="toggleSetting('autoReset')"></div>
+                </div>
+                <div class="setting-item">
+                    <span>Következő esemény visszaszámlálás</span>
+                    <div class="toggle active" id="dynamicCountdownToggle" onclick="toggleSetting('dynamicCountdown')"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-button" id="addEventBtn" onclick="openAddModal()">+</button>
+
+    <div class="bottom-nav">
+        <button class="nav-btn active" data-tab="active">
+            <span class="icon">📅</span>
+            <span>Aktív</span>
+        </button>
+        <button class="nav-btn" data-tab="completed">
+            <span class="icon">✅</span>
+            <span>Elvégzett</span>
+        </button>
+        <button class="nav-btn" data-tab="scheduled">
+            <span class="icon">🔔</span>
+            <span>Ütemezett</span>
+        </button>
+        <button class="nav-btn" data-tab="settings">
+            <span class="icon">⚙️</span>
+            <span>Beállítások</span>
+        </button>
+    </div>
+
+    <!-- Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">📝 Új Esemény</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Cím</label>
+                <input type="text" id="eventTitle" placeholder="pl. XTL Eladás">
+            </div>
+            <div class="form-group">
+                <label>Dátum</label>
+                <input type="date" id="eventDate">
+            </div>
+            <div class="form-group">
+                <label>Idő</label>
+                <input type="time" id="eventTime">
+            </div>
+            <div class="form-group">
+                <label>Prioritás</label>
+                <select id="eventPriority">
+                    <option value="high">🔥🔥🔥 Magas</option>
+                    <option value="medium">📊 Közepes</option>
+                    <option value="low">ℹ️ Alacsony</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Részletek (soronként)</label>
+                <textarea id="eventDetails" placeholder="✅ Első teendő&#10;💰 Második teendő&#10;📊 Harmadik teendő"></textarea>
+            </div>
+            <button class="action-button" onclick="saveEvent()">💾 Mentés</button>
+        </div>
+    </div>
+
+    <script>
+        // Initial data
+        let events = [
+            {
+                id: 1,
+                title: "XTL Eladás Előkészítés🔥🔥🔥",
+                date: "2026-02-10",
+                time: "14:00",
+                priority: "high",
+                details: ["✅ XTL ár Lightyear", "👀 Volume < 10k", "🔔 Alert $1.10/$0.90"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 2,
+                title: "XTL TELJES ELADÁS🔥🔥🔥",
+                date: "2026-02-10",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 20 shares SELL MAX", "📊 Limit $1.00-1.10"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 3,
+                title: "NFLX Warner Bros🔥🔥",
+                date: "2026-02-12",
+                time: "14:00",
+                priority: "high",
+                details: ["📰 Merger hírek", "🔴 FTC döntés"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 4,
+                title: "NFLX 50% Eladás🔥🔥",
+                date: "2026-02-12",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 ~22,364 Ft", "⚠️ Csak 50%!"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 5,
+                title: "NVDA Earnings Prep📊",
+                date: "2026-02-26",
+                time: "21:30",
+                priority: "medium",
+                details: ["📊 Analyst expectations", "🚫 NE VÁSÁROLJ MÉG"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 6,
+                title: "NVDA Earnings LIVE📊",
+                date: "2026-02-26",
+                time: "22:00",
+                priority: "medium",
+                details: ["📊 investor.nvidia.com", "⏰ Várj péntekig"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 7,
+                title: "MSTR Bitcoin Check🔥🔥",
+                date: "2026-03-03",
+                time: "13:00",
+                priority: "high",
+                details: ["🪙 BTC ár check", "⚠️ Ha +20% NE ADJ EL"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 8,
+                title: "MSTR 50% Eladás🔥🔥",
+                date: "2026-03-03",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 ~36,553 Ft", "🪙 BTC trend előbb"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 9,
+                title: "NVDA Első Vásárlás🔥🔥",
+                date: "2026-03-06",
+                time: "15:30",
+                priority: "high",
+                details: ["💰 ~15,000 Ft", "⚠️ Első 30%"],
+                completed: false,
+                notified: false
+            },
+            {
+                id: 10,
+                title: "Portfolio Review🔥🔥",
+                date: "2026-04-07",
+                time: "10:00",
+                priority: "high",
+                details: ["📋 Teljes review", "📰 NFLX WB döntés"],
+                completed: false,
+                notified: false
+            }
+        ];
+
+        let nextEventCountdown = 0;
+        let currentEditId = null;
+        let dynamicCountdownEnabled = true;
+
+        // Load data
+        function loadData() {
+            const saved = localStorage.getItem('tradingEvents');
+            if (saved) {
+                events = JSON.parse(saved);
+            }
+            const settings = localStorage.getItem('tradingSettings');
+            if (settings) {
+                const parsed = JSON.parse(settings);
+                dynamicCountdownEnabled = parsed.dynamicCountdown !== false;
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('tradingEvents', JSON.stringify(events));
+            localStorage.setItem('tradingSettings', JSON.stringify({ dynamicCountdown: dynamicCountdownEnabled }));
+        }
+
+        loadData();
+
+        // Update notification status
+        function updateNotificationStatus() {
+            if (!("Notification" in window)) {
+                document.getElementById('notificationBanner').style.display = 'none';
+                return;
+            }
+
+            const status = Notification.permission;
+            const statusElement = document.getElementById('notifStatus');
+
+            if (status === 'granted') {
+                statusElement.textContent = 'Engedélyezve ✅';
+                statusElement.className = 'notif-status granted';
+                document.getElementById('notificationBanner').classList.add('hidden');
+            } else if (status === 'denied') {
+                statusElement.textContent = 'Letiltva ❌';
+                statusElement.className = 'notif-status denied';
+                document.getElementById('notificationBanner').classList.add('hidden');
+            } else {
+                statusElement.textContent = 'Nincs engedélyezve';
+                statusElement.className = 'notif-status default';
+            }
+        }
+
+        async function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("❌ Ez a böngésző nem támogatja az értesítéseket!");
+                return;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+
+                if (permission === "granted") {
+                    alert("✅ Értesítések engedélyezve!");
+                    updateNotificationStatus();
+                    testNotification();
+                } else if (permission === "denied") {
+                    alert("❌ Értesítések letiltva. Engedélyezd a böngésző beállításokban!");
+                } else {
+                    alert("⚠️ Értesítések nem engedélyezve.");
+                }
+                updateNotificationStatus();
+            } catch (error) {
+                alert("❌ Hiba az engedély kérésekor: " + error.message);
+            }
+        }
+
+        function testNotification() {
+            if (!("Notification" in window)) {
+                alert("❌ Ez a böngésző nem támogatja az értesítéseket!");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                new Notification("📊 Trading Assistant", {
+                    body: "Értesítések sikeresen engedélyezve! 🎉",
+                    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f3460'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='%2300d4ff'>📊</text></svg>",
+                    badge: "📊",
+                    tag: "test-notification",
+                    requireInteraction: false
+                });
+            } else {
+                alert("⚠️ Kérlek engedélyezd az értesítéseket először!");
+                requestNotificationPermission();
+            }
+        }
+
+        function sendEventNotification(event) {
+            if (Notification.permission === "granted") {
+                new Notification(`🔔 ${event.title}`, {
+                    body: event.details.join('\n'),
+                    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f3460'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='%2300d4ff'>📊</text></svg>",
+                    badge: "🔔",
+                    tag: `event-${event.id}`,
+                    requireInteraction: true
+                });
+            }
+        }
+
+        updateNotificationStatus();
+
+        // Get next event
+        function getNextEvent() {
+            const now = new Date();
+            const futureEvents = events.filter(e => !e.completed && new Date(e.date + 'T' + e.time) > now);
+            return futureEvents.length > 0 ? futureEvents.reduce((earliest, current) => {
+                const earliestTime = new Date(earliest.date + 'T' + earliest.time);
+                const currentTime = new Date(current.date + 'T' + current.time);
+                return currentTime < earliestTime ? current : earliest;
+            }) : null;
+        }
+
+        // Update next event banner and countdown
+        function updateNextEvent() {
+            const nextEvent = getNextEvent();
+            const banner = document.getElementById('nextEventBanner');
+            const countdownEl = document.getElementById('nextEventCountdown');
+            const titleEl = document.getElementById('nextEventTitle');
+            const timeEl = document.getElementById('nextEventTime');
+
+            if (nextEvent && dynamicCountdownEnabled) {
+                const now = new Date();
+                const eventTime = new Date(nextEvent.date + 'T' + nextEvent.time);
+                nextEventCountdown = Math.floor((eventTime - now) / 1000);
+
+                if (nextEventCountdown > 0) {
+                    const hours = Math.floor(nextEventCountdown / 3600);
+                    const minutes = Math.floor((nextEventCountdown % 3600) / 60);
+                    const seconds = nextEventCountdown % 60;
+
+                    countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                    titleEl.textContent = nextEvent.title;
+                    timeEl.textContent = `${nextEvent.date} ${nextEvent.time}`;
+                    banner.classList.remove('hidden');
+                } else {
+                    banner.classList.add('hidden');
+                }
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        // Countdown timer (dynamic)
+        function updateCountdown() {
+            if (dynamicCountdownEnabled && nextEventCountdown > 0) {
+                nextEventCountdown--;
+                updateNextEvent();
+            } else {
+                const hours = Math.floor(3600 / 3600);
+                const minutes = Math.floor((3600 % 3600) / 60);
+                const seconds = 3600 % 60;
+                document.getElementById('countdown').textContent = `01:00:00`;
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+        updateNextEvent();
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn, .nav-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(b => b.classList.add('active'));
+        }
+
+        document.querySelectorAll('.tab-btn, .nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // Render events with new event highlighting
+        function renderEvents() {
+            const now = new Date();
+            const activeEvents = events.filter(e => !e.completed && new Date(e.date + 'T' + e.time) <= now);
+            const scheduledEvents = events.filter(e => !e.completed && new Date(e.date + 'T' + e.time) > now);
+            const completedEvents = events.filter(e => e.completed);
+
+            const activeList = document.getElementById('activeEventsList');
+            if (activeEvents.length === 0) {
+                activeList.innerHTML = '<div class="empty-state"><div class="icon">📅</div><h3>Nincs aktív esemény</h3></div>';
+            } else {
+                activeList.innerHTML = activeEvents.map(event => renderEvent(event, now)).join('');
+            }
+
+            const scheduledList = document.getElementById('scheduledEventsList');
+            if (scheduledEvents.length === 0) {
+                scheduledList.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><h3>Nincs ütemezett esemény</h3></div>';
+            } else {
+                scheduledList.innerHTML = scheduledEvents.map(event => renderEvent(event, now)).join('');
+            }
+
+            const completedList = document.getElementById('completedEventsList');
+            if (completedEvents.length === 0) {
+                completedList.innerHTML = '<div class="empty-state"><div class="icon">✅</div><h3>Nincs elvégzett esemény</h3></div>';
+            } else {
+                completedList.innerHTML = completedEvents.map(event => renderEvent(event, now)).join('');
+            }
+        }
+
+        function renderEvent(event, now) {
+            const eventTime = new Date(event.date + 'T' + event.time);
+            const timeDiff = eventTime - now;
+            const isNew = timeDiff > 0 && timeDiff <= 30 * 60 * 1000; // 30 min
+
+            return `
+                <div class="event-card priority-${event.priority}${isNew ? ' new' : ''}">
+                    <button class="delete-btn" onclick="deleteEvent(${event.id})">🗑️</button>
+                    <div class="event-header">
+                        <div>
+                            <div class="event-title">${event.title}</div>
+                            <div class="event-datetime">
+                                <span>📅 ${event.date}</span>
+                                <span>🕐 ${event.time}</span>
+                                ${timeDiff > 0 ? `<span style="color: #4caf50;">⏰ ${Math.floor(timeDiff / 60000)}p</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="event-details">
+                        ${event.details.map(d => `<div class="event-detail-item">${d}</div>`).join('')}
+                    </div>
+                    ${!event.completed ? `<button class="action-button" style="margin-top: 1rem;" onclick="markComplete(${event.id})">✅ Elvégezve</button>` : ''}
+                </div>
+            `;
+        }
+
+        function markComplete(id) {
+            const event = events.find(e => e.id === id);
+            if (event) {
+                event.completed = true;
+                saveData();
+                renderEvents();
+                updateNextEvent();
+            }
+        }
+
+        function deleteEvent(id) {
+            if (confirm('Biztosan törölni szeretnéd ezt az eseményt?')) {
+                events = events.filter(e => e.id !== id);
+                saveData();
+                renderEvents();
+                updateNextEvent();
+            }
+        }
+
+        function openAddModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = '📝 Új Esemény';
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventDate').value = '';
+            document.getElementById('eventTime').value = '';
+            document.getElementById('eventPriority').value = 'high';
+            document.getElementById('eventDetails').value = '';
+            document.getElementById('eventModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
+        function saveEvent() {
+            const title = document.getElementById('eventTitle').value;
+            const date = document.getElementById('eventDate').value;
+            const time = document.getElementById('eventTime').value;
+            const priority = document.getElementById('eventPriority').value;
+            const details = document.getElementById('eventDetails').value.split('\n').filter(d => d.trim());
+
+            if (!title || !date || !time) {
+                alert('Kérlek töltsd ki a kötelező mezőket!');
+                return;
+            }
+
+            if (currentEditId) {
+                const event = events.find(e => e.id === currentEditId);
+                Object.assign(event, { title, date, time, priority, details });
+            } else {
+                const newEvent = {
+                    id: Date.now(),
+                    title,
+                    date,
+                    time,
+                    priority,
+                    details,
+                    completed: false,
+                    notified: false
+                };
+                events.push(newEvent);
+            }
+
+            saveData();
+            renderEvents();
+            updateNextEvent();
+            closeModal();
+        }
+
+        function toggleSetting(setting) {
+            const toggle = document.getElementById(setting + 'Toggle');
+            toggle.classList.toggle('active');
+
+            if (setting === 'dynamicCountdown') {
+                dynamicCountdownEnabled = toggle.classList.contains('active');
+                saveData();
+                updateNextEvent();
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(events, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `trading-assistant-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            alert('✅ Adatok exportálva!');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        if (confirm(`Importálni szeretnél ${imported.length} eseményt? Ez hozzáadja őket a meglévő adatokhoz.`)) {
+                            events = [...events, ...imported];
+                            saveData();
+                            renderEvents();
+                            updateNextEvent();
+                            alert('✅ Adatok sikeresen importálva!');
+                        }
+                    } else {
+                        alert('❌ Hibás fájl formátum!');
+                    }
+                } catch (err) {
+                    alert('❌ Hiba az importálás során: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ Biztosan törölni szeretnéd az ÖSSZES adatot? Ez nem vonható vissza!')) {
+                if (confirm('❗ Utolsó figyelmeztetés! Minden adat törlődik!')) {
+                    events = [];
+                    localStorage.clear();
+                    renderEvents();
+                    updateNextEvent();
+                    alert('✅ Minden adat törölve!');
+                }
+            }
+        }
+
+        // Initial render
+        renderEvents();
+
+        // Event monitoring loop - every 30 seconds
+        setInterval(() => {
+            const now = new Date();
+            events.forEach(event => {
+                if (!event.completed && !event.notified) {
+                    const eventTime = new Date(event.date + 'T' + event.time);
+                    const timeDiff = eventTime - now;
+
+                    // Notify 15 minutes before
+                    if (timeDiff > 0 && timeDiff <= 15 * 60 * 1000) {
+                        sendEventNotification(event);
+                        event.notified = true;
+                        saveData();
+                    }
+                }
+            });
+
+            // Check for newly active events
+            renderEvents();
+            updateNextEvent();
+        }, 30000); // Every 30 seconds
+    </script>
+</body>
+</html>
